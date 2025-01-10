@@ -19,22 +19,15 @@ class DateTimeField extends Field<DateTime> {
   DateTimeField({
     required super.name,
     required super.initialValue,
-    @deprecated super.onChanged,
+    @Deprecated('Fields should not be aware of their context') super.onChanged,
     required this.start,
     required this.end,
   }) : super(
           type: FieldType.dateTime,
           codec: FieldCodec<DateTime>(
-            toParam: (value) {
-              // encode the date time to a string to replace all instances of
-              // ':' with '%3A' to avoid issues with retrieving the value
-              // from the param in the query group because it is saved in a map
-              return Uri.encodeComponent(value.toSimpleFormat());
-            },
+            toParam: (value) => value.toSimpleFormat(),
             toValue: (param) {
-              return param == null
-                  ? null
-                  : DateTime.tryParse(Uri.decodeComponent(param));
+              return param == null ? null : DateTime.tryParse(param);
             },
           ),
         );

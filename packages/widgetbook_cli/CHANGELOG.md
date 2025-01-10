@@ -1,9 +1,46 @@
-## Unreleased
+## 3.5.0
+
+- **FEAT**: Add support for [GitLab Merged Results Pipelines](https://docs.gitlab.com/ee/ci/pipelines/merged_results_pipelines.html) via the `cloud build push` command. Check [our docs](https://docs.widgetbook.io/cloud/setup/gitlab#gitlab-merged-result-pipelines) for more info. ([#1312](https://github.com/widgetbook/widgetbook/pull/1312))
+- **BREAKING**: Remove the deprecated `publish` command. Use [`cloud build push` command](https://docs.widgetbook.io/cli/commands/cloud-build-push) instead. ([#1315](https://github.com/widgetbook/widgetbook/pull/1315))
+
+## 3.4.3
+
+- **FIX**: Convert Windows paths to POSIX paths when uploading files. ([#1294](https://github.com/widgetbook/widgetbook/pull/1294))
+- **FIX**: Show an error when no git repository is found. ([#1286](https://github.com/widgetbook/widgetbook/pull/1286))
+
+## 3.4.2
+
+- **FIX**: Provide default values for arguments when running in GitLab CI/CD. ([#1277](https://github.com/widgetbook/widgetbook/pull/1277))
+
+## 3.4.1
+
+- **FIX**: Provide default values for arguments when running in Azure Pipelines. ([#1271](https://github.com/widgetbook/widgetbook/pull/1271))
+
+## 3.4.0
+
+- **FEAT**: Support Multi Snapshot for addons. For more information, check our [docs](https://docs.widgetbook.io/cloud/reviews/multi-snapshot). ([#1239](https://github.com/widgetbook/widgetbook/pull/1239))
+
+## 3.3.1
+
+- **FIX**: `base href` replacement for older Flutter versions ([#1247](https://github.com/widgetbook/widgetbook/pull/1247))
+
+## 3.3.0
+
+- **REFACTOR**: Speed up the creation of build drafts, by reducing the payload size. ([#1232](https://github.com/widgetbook/widgetbook/pull/1232))
+
+## 3.2.0
+
+- **REFACTOR**: Upload build files directly to storage, bypassing Widgetbook Cloud's server. This enhancement ensures that builds are instantly available on Widgetbook Cloud upon completion of the `cloud build push` command, eliminating the need for additional processing. ([#1229](https://github.com/widgetbook/widgetbook/pull/1229))
+
+## 3.1.1
+
+- **FIX**: Reject builds without use-cases. ([#1213](https://github.com/widgetbook/widgetbook/pull/1213))
+
+## 3.1.0
 
 - **BREAKING**: Set minimum SDK version to 3.0.0. ([#1030](https://github.com/widgetbook/widgetbook/pull/1030))
 - **FEAT**: Introduce new `cloud build push` command, and deprecate the old `publish` command. ([#1153](https://github.com/widgetbook/widgetbook/pull/1155))
-- **FIX**: Remove `#` from build URLs. ([#1063](https://github.com/widgetbook/widgetbook/pull/1063))
-- **REFACTOR**: Remove reviews feature in favor of the [GitHub app](https://github.com/apps/widgetbook). The `--base-branch` option has no effect anymore. ([#1155](https://github.com/widgetbook/widgetbook/pull/1155))
+- **REFACTOR**: Remove reviews feature in favor of the [GitHub app](https://github.com/apps/widgetbook). The `--base-branch` option has no effect anymore. For more info, check our [docs for reviews](https://docs.widgetbook.io/cloud/reviews). ([#1155](https://github.com/widgetbook/widgetbook/pull/1155))
 
 ## 3.0.1
 
@@ -19,7 +56,7 @@
 
 ## 3.0.0-rc.5
 
-- **BREAKING**: Remove `--github-token` & `--pr` options from `publish` command. You can now use our [GitHub App](https://docs.widgetbook.io/widgetbook-cloud/integrating-github) instead. ([#982](https://github.com/widgetbook/widgetbook/pull/982))
+- **BREAKING**: Remove `--github-token` & `--pr` options from `publish` command. You can now use our [GitHub App](https://docs.widgetbook.io/cloud/integrating-github) instead. ([#982](https://github.com/widgetbook/widgetbook/pull/982))
 
 ## 3.0.0-rc.4
 

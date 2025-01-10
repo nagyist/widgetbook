@@ -1,4 +1,4 @@
-import '../../models/models.dart';
+import '../../cache/cache.dart';
 
 class BuildDraftRequest {
   const BuildDraftRequest({
@@ -8,7 +8,10 @@ class BuildDraftRequest {
     required this.actor,
     required this.branch,
     required this.sha,
+    required this.mergedResultSha,
     required this.useCases,
+    required this.addonsConfigs,
+    required this.size,
   });
 
   final String apiKey;
@@ -17,7 +20,10 @@ class BuildDraftRequest {
   final String actor;
   final String branch;
   final String sha;
+  final String? mergedResultSha;
   final List<UseCaseMetadata> useCases;
+  final AddonsConfigs? addonsConfigs;
+  final int size;
 
   Map<String, dynamic> toJson() {
     return {
@@ -27,7 +33,10 @@ class BuildDraftRequest {
       'actor': actor,
       'branch': branch,
       'sha': sha,
+      'mergedResultSha': mergedResultSha,
       'useCases': useCases.map((x) => x.toJson()).toList(),
+      'addonsConfigs': addonsConfigs,
+      'size': size,
     };
   }
 }

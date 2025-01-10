@@ -1,6 +1,38 @@
-## Unreleased
+## 3.10.2
 
+- **FEAT**: Add `WidgetbookState.maybeOf`. ([#1342](https://github.com/widgetbook/widgetbook/pull/1342) - by [@ABausG](https://github.com/ABausG))
+
+## 3.10.1
+
+- **FIX**: Expose `WidgetbookScope` to allow importing it in tests. ([#1325](https://github.com/widgetbook/widgetbook/pull/1325))
+- **FIX**: Allow special characters in search query. ([#1293](https://github.com/widgetbook/widgetbook/pull/1293) - by [@07Abhinavkapoor](https://github.com/07Abhinavkapoor))
+
+## 3.10.0
+
+- **REFACTOR**: Use a slider instead of a dropdown for `TextScaleAddon`. The `scales` parameter is deprecated, and can be removed or replaced with a combination of `min`, `max` and `divisions` parameters if the default values are not sufficient. ([#1224](https://github.com/widgetbook/widgetbook/pull/1224) - by [@ash14](https://github.com/ash14))
+- **REFACTOR**: Expand `DropdownMenu` to the full width of the sidebar. ([#1287](https://github.com/widgetbook/widgetbook/pull/1287))
+- **REFACTOR**: Use tabs instead of accordion for the sidebar. ([#1290](https://github.com/widgetbook/widgetbook/pull/1290))
+
+## 3.9.0
+
+- **BREAKING**: Set minimum SDK version to 3.0.0 & minimum Flutter version to 3.16.0. ([#1243](https://github.com/widgetbook/widgetbook/pull/1243))
+- **FEAT**: Allow changing Widgetbook's theme and mode. ([#1225](https://github.com/widgetbook/widgetbook/pull/1225) - by [@Mastersam07](https://github.com/Mastersam07))
+- **REFACTOR**: Use `MediaQuery.textScaler` instead of `MediaQuery.textScaleFactor` for `TextScaleAddon`. ([#1244](https://github.com/widgetbook/widgetbook/pull/1244))
+- **REFACTOR**: Use [`GridPaper`](https://api.flutter.dev/flutter/widgets/GridPaper-class.html) for `GridAddon`. ([#1259](https://github.com/widgetbook/widgetbook/pull/1259))
+- **FIX**: Skip decoding non-ascii characters in URLs. ([#1218](https://github.com/widgetbook/widgetbook/pull/1218) - by [@shigomany](https://github.com/shigomany))
+- **FIX**: Encode all fields values to allow reserved characters (e.g. commas, colons and curly brackets). ([#1214](https://github.com/widgetbook/widgetbook/pull/1214))
+- **FIX**: Remove default value (i.e. first item) from `listOrNull` knob. ([#1233](https://github.com/widgetbook/widgetbook/pull/1233))
+
+## 3.8.1
+
+- **FIX**: Show popup routes (e.g. dialogs and modal sheets) inside the boundaries on the device frame. ([#1209](https://github.com/widgetbook/widgetbook/pull/1209))
+
+## 3.8.0
+
+- **FIX**: Maintain theme in Flutter v3.22. ([#1184](https://github.com/widgetbook/widgetbook/pull/1184))
+- **FIX**: Allow colons _(and other special characters)_ in fields' names. ([#1165](https://github.com/widgetbook/widgetbook/pull/1165) - by [@maudFrz](https://github.com/maudFrz))
 - **FIX**: Guard `list` knob against null values when searching. ([#1152](https://github.com/widgetbook/widgetbook/pull/1152) - by [@bramp](https://github.com/bramp))
+- **REFACTOR**: Deprecate `AccessibilityAddon` in favor of `BuilderAddon`. Check out the [setup guide](https://docs.widgetbook.io/addons/accessibility-addon) to know how to migrate. ([#1193](https://github.com/widgetbook/widgetbook/pull/1193))
 
 ## 3.7.1
 

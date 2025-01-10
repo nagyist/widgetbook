@@ -10,7 +10,9 @@ void main() {
     () {
       const factor = 3.0;
       final addon = TextScaleAddon(
-        scales: [2.0, 3.0, 4.0],
+        min: 1.0,
+        max: 4.0,
+        divisions: 3,
       );
 
       test(
@@ -42,9 +44,8 @@ void main() {
           );
 
           expect(
-            // ignore: deprecated_member_use
-            mediaQuery.textScaleFactor,
-            equals(factor),
+            mediaQuery.textScaler,
+            equals(const TextScaler.linear(factor)),
           );
         },
       );

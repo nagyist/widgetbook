@@ -26,7 +26,7 @@ void main() {
 
           expect(
             find.textWidget(value),
-            findsNWidgets(2),
+            findsOneWidget,
           );
         },
       );
@@ -50,7 +50,7 @@ void main() {
 
           expect(
             find.textWidget(value),
-            findsNWidgets(2),
+            findsOneWidget,
           );
         },
       );
@@ -61,8 +61,8 @@ void main() {
     '$ListKnob.nullable',
     () {
       testWidgets(
-        'when field is updated, '
-        'then the value should be updated',
+        'when no initial value is provided, '
+        'then a null value is returned',
         (tester) async {
           await tester.pumpKnob(
             (context) => Text(
@@ -73,13 +73,46 @@ void main() {
             ),
           );
 
+          final menu = tester.widget<DropdownMenu<String?>>(
+            find.byType(DropdownMenu<String?>),
+          );
+
+          // DropdownMenu has no initialSelection as
+          // no initial value is provided
+          expect(
+            menu.initialSelection,
+            isNull,
+          );
+          expect(
+            find.text('null'),
+            findsOneWidget,
+          );
+        },
+      );
+
+      testWidgets(
+        'when field is updated, '
+        'then the value should be updated',
+        (tester) async {
+          await tester.pumpKnob(
+            (context) => Text(
+              context.knobs
+                  .listOrNull(
+                    label: 'Knob',
+                    options: ['A', 'B', 'C'],
+                    initialOption: 'A',
+                  )
+                  .toString(),
+            ),
+          );
+
           const value = 'C';
           await tester.findAndTap(find.byType(DropdownMenu<String?>));
           await tester.findAndTap(find.text(value).last);
 
           expect(
             find.textWidget(value),
-            findsNWidgets(2),
+            findsOneWidget,
           );
         },
       );
@@ -90,16 +123,14 @@ void main() {
         (tester) async {
           await tester.pumpKnob(
             (context) => Text(
-              context.knobs.listOrNull(
-                label: 'Knob',
-                options: ['A', 'B', 'C'],
-              ).toString(),
+              context.knobs
+                  .listOrNull(
+                    label: 'Knob',
+                    options: ['A', 'B', 'C'],
+                    initialOption: 'A',
+                  )
+                  .toString(),
             ),
-          );
-
-          expect(
-            find.textWidget('A'),
-            findsNWidgets(2),
           );
 
           const value = 'C';
@@ -107,7 +138,7 @@ void main() {
           await tester.findAndTap(find.text(value).last);
           expect(
             find.textWidget(value),
-            findsNWidgets(2),
+            findsOneWidget,
           );
 
           await tester.findAndTap(find.byType(Checkbox));
@@ -116,7 +147,7 @@ void main() {
           await tester.findAndTap(find.byType(Checkbox));
           expect(
             find.textWidget(value),
-            findsNWidgets(2),
+            findsOneWidget,
           );
         },
       );

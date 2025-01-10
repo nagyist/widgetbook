@@ -9,17 +9,30 @@ import 'package:widgetbook_annotation/widgetbook_annotation.dart';
 import 'package:yaml/yaml.dart';
 
 import '../models/element_metadata.dart';
+import '../models/nav_path_mode.dart';
 import '../models/use_case_metadata.dart';
+import '../util/constant_reader.dart';
 
 class UseCaseGenerator extends GeneratorForAnnotation<UseCase> {
-  final packagesMapResource = Resource<YamlMap>(
-    () async {
-      final lockFile = await File('pubspec.lock').readAsString();
-      final yaml = loadYaml(lockFile) as YamlMap;
+  UseCaseGenerator(this.navPathMode);
 
-      return yaml['packages'] as YamlMap;
+  final packagesMapResource = Resource<YamlMap?>(
+    () async {
+      try {
+        final lockFile = await File('pubspec.lock').readAsString();
+        final yaml = loadYaml(lockFile) as YamlMap;
+
+        return yaml['packages'] as YamlMap;
+      } catch (_) {
+        // The pubspec.lock can be missing in certain cases,
+        // For example when using the dart workspaces.
+        // See: https://github.com/widgetbook/widgetbook/issues/1326
+        return null;
+      }
     },
   );
+
+  final NavPathMode navPathMode;
 
   @override
   Future<String> generateForAnnotatedElement(
@@ -36,16 +49,17 @@ class UseCaseGenerator extends GeneratorForAnnotation<UseCase> {
 
     final name = annotation.read('name').stringValue;
     final type = annotation.read('type').typeValue;
-    final designLink = !annotation.read('designLink').isNull
-        ? annotation.read('designLink').stringValue
-        : null;
-
-    final path = !annotation.read('path').isNull
-        ? annotation.read('path').stringValue
-        : null;
+    final designLink = annotation.readOrNull('designLink')?.stringValue;
+    final path = annotation.readOrNull('path')?.stringValue;
 
     final componentName = type
-        .getDisplayString(withNullability: false)
+        .getDisplayString(
+          // The `withNullability` parameter is deprecated after analyzer 6.0.0,
+          // since we support analyzer 5.x (to support Dart <3.0.0), then
+          // the deprecation is ignored.
+          // ignore: deprecated_member_use
+          withNullability: false,
+        )
         // Generic widgets shouldn't have a "<dynamic>" suffix
         // if no type parameter is specified.
         .replaceAll('<dynamic>', '');
@@ -56,7 +70,11 @@ class UseCaseGenerator extends GeneratorForAnnotation<UseCase> {
     final useCasePath = await resolveElementPath(element, buildStep);
     final componentPath = await resolveElementPath(type.element!, buildStep);
 
-    final navPath = path ?? getNavPath(componentUri);
+    final targetNavUri = navPathMode == NavPathMode.component //
+        ? componentUri
+        : useCaseUri;
+
+    final navPath = path ?? getNavPath(targetNavUri);
 
     final metadata = UseCaseMetadata(
       functionName: element.name!,
@@ -131,9 +149,10 @@ class UseCaseGenerator extends GeneratorForAnnotation<UseCase> {
     }
 
     final resource = await buildStep.fetchResource(packagesMapResource);
+    if (resource == null) return elementPath;
+
     final packageData = resource[elementPackage] as YamlMap;
     final isLocalPackage = packageData['source'] == 'path';
-
     if (!isLocalPackage) return elementPath;
 
     final packagePath = packageData['description']['path'] as String;
