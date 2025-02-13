@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../integrations/integrations.dart';
 import '../state/state.dart';
 import 'field_codec.dart';
 import 'field_type.dart';
@@ -9,8 +8,7 @@ import 'field_type.dart';
 /// panel. They should be convertible to:
 ///
 /// 1. [Widget] through [toWidget]; used to display this in the settings panel.
-/// 2. [Map] through [toJson]; used to send a JSON-representation of the field
-/// to be interpreted by [WidgetbookCloudIntegration].
+/// 2. [Map] through [toJson]; used to send a JSON-representation of the field.
 ///
 /// [Field]s keep their changes in sync with [WidgetbookState] which syncs them
 /// with the query parameters. A [Field] is encoded into a query parameter using
@@ -28,7 +26,7 @@ abstract class Field<T> {
     required this.type,
     required this.initialValue,
     required this.codec,
-    @deprecated this.onChanged,
+    @Deprecated('Fields should not be aware of their context') this.onChanged,
   });
 
   /// Name of this inside the query group.
@@ -78,10 +76,12 @@ abstract class Field<T> {
 
   /// Same as [toJson] put prepends some metadata like [name], [type] and value.
   Map<String, dynamic> toFullJson() {
+    final _value = initialValue; // local variable promotion
+
     return {
       'name': name,
       'type': type.name,
-      'value': initialValue == null ? null : codec.toParam(initialValue!),
+      'value': _value == null ? null : codec.toParam(_value),
       ...toJson(),
     };
   }

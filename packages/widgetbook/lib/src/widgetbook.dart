@@ -25,6 +25,9 @@ class Widgetbook extends StatefulWidget {
     this.appBuilder = widgetsAppBuilder,
     this.addons,
     this.integrations,
+    this.lightTheme,
+    this.darkTheme,
+    this.themeMode,
   });
 
   /// A [Widgetbook] with [CupertinoApp] as an [appBuilder].
@@ -35,6 +38,9 @@ class Widgetbook extends StatefulWidget {
     this.appBuilder = cupertinoAppBuilder,
     this.addons,
     this.integrations,
+    this.lightTheme,
+    this.darkTheme,
+    this.themeMode,
   });
 
   /// A [Widgetbook] with [MaterialApp] as an [appBuilder].
@@ -45,6 +51,9 @@ class Widgetbook extends StatefulWidget {
     this.appBuilder = materialAppBuilder,
     this.addons,
     this.integrations,
+    this.lightTheme,
+    this.darkTheme,
+    this.themeMode,
   });
 
   /// The initial route for that will be used on first startup.
@@ -66,10 +75,24 @@ class Widgetbook extends StatefulWidget {
   /// The list of add-ons for your [Widget] library
   final List<WidgetbookAddon>? addons;
 
-  /// The list of integrations for your [Widget] library. Primarily used to
-  /// integrate with Widgetbook Cloud via [WidgetbookCloudIntegration], but
-  /// can also be used to integrate with third-party packages.
+  /// The list of integrations for your [Widget] library.
   final List<WidgetbookIntegration>? integrations;
+
+  /// The custom theme for the Widgetbook interface when using light mode.
+  ///
+  /// This theme will override the default light theme provided by Widgetbook.
+  final ThemeData? lightTheme;
+
+  /// The custom theme for the Widgetbook interface when using dark mode.
+  ///
+  /// This theme will override the default dark theme provided by Widgetbook.
+  final ThemeData? darkTheme;
+
+  /// The theme mode to be applied to the Widgetbook application.
+  ///
+  /// This parameter allows you to set the theme to light, dark, or follow the system setting.
+  /// By default, it follows the system theme.
+  final ThemeMode? themeMode;
 
   @override
   State<Widgetbook> createState() => _WidgetbookState();
@@ -93,10 +116,13 @@ class _WidgetbookState extends State<Widgetbook> {
     );
 
     router = AppRouter(
-      initialRoute: Uri.base.fragment.isNotEmpty
-          ? Uri.base.fragment
-          : widget.initialRoute,
       state: state,
+      // Do not use the initial route if there is an existing URL fragment.
+      // That means that the user has navigated to a different route then
+      // they restarted the app, so we should not override that.
+      uri: Uri.base.fragment.isNotEmpty
+          ? Uri.parse(Uri.base.fragment)
+          : Uri.parse(widget.initialRoute),
     );
 
     widget.integrations?.forEach(
@@ -110,8 +136,9 @@ class _WidgetbookState extends State<Widgetbook> {
       state: state,
       child: MaterialApp.router(
         title: 'Widgetbook',
-        theme: Themes.light,
-        darkTheme: Themes.dark,
+        themeMode: widget.themeMode ?? ThemeMode.system,
+        theme: widget.lightTheme ?? Themes.light,
+        darkTheme: widget.darkTheme ?? Themes.dark,
         routerConfig: router,
         debugShowCheckedModeBanner: false,
       ),

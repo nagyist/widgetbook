@@ -1,7 +1,6 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart';
-import 'package:dart_style/dart_style.dart';
 import 'package:glob/glob.dart';
 import 'package:source_gen/source_gen.dart';
 
@@ -61,7 +60,6 @@ class ComponentsBuilder implements Builder {
       },
     );
 
-    final formatter = DartFormatter();
     final emitter = DartEmitter(
       allocator: Allocator.simplePrefixing(),
     );
@@ -72,8 +70,6 @@ class ComponentsBuilder implements Builder {
       ${outputLibrary.accept(emitter)}
     ''';
 
-    final formattedContent = formatter.format(content);
-
-    buildStep.writeAsString(outputAsset, formattedContent);
+    buildStep.writeAsString(outputAsset, content);
   }
 }

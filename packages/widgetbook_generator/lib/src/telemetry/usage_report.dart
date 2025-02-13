@@ -5,9 +5,11 @@ import '../models/use_case_metadata.dart';
 class UsageReport {
   UsageReport.from({
     required this.trackingId,
+    required this.projectId,
     required this.project,
     required List<UseCaseMetadata> useCases,
     required this.version,
+    required this.ownerUrl,
   }) {
     packages = useCases.map((e) => e.component.package).toSet();
 
@@ -29,11 +31,16 @@ class UsageReport {
   }
 
   final String trackingId;
+  final String projectId;
   final String project;
   final DateTime timestamp = DateTime.now();
 
   /// `widgetbook_generator` version
   final String version;
+
+  /// URL to the owner's git account
+  /// Example: https://github.com/widgetbook
+  final String? ownerUrl;
 
   /// Unique set of components' packages.
   /// This helps identify different projects
@@ -55,7 +62,7 @@ class UsageReport {
       );
 
   /// Unique ID to identify the report
-  String get id => '$project'
+  String get id => '$projectId'
       '-C$componentsCount'
       '-U$useCasesCount'
       '-P${packages.length}'
@@ -74,10 +81,12 @@ class UsageReport {
         '\$insert_id': id,
         'version': version,
         'project': project,
+        'project_id': projectId,
         'packages': packages.toList(),
         'components': componentsCount,
         'use_cases': useCasesCount,
         'heat_map': heatMap.map((key, value) => MapEntry('$key', value)),
+        'owner_url': ownerUrl,
       },
     };
   }

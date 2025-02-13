@@ -2,7 +2,6 @@ import 'package:args/args.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
-import 'package:widgetbook_cli/src/commands/build_push.dart';
 import 'package:widgetbook_cli/widgetbook_cli.dart';
 
 import '../../helper/mocks.dart';
@@ -15,8 +14,6 @@ void main() {
     late Context context;
 
     setUp(() async {
-      registerFallbackValue(FakeEnvironment());
-
       logger = MockLogger();
       repository = MockRepository();
       progress = MockProgress();
@@ -25,8 +22,6 @@ void main() {
       when(() => logger.progress(any<String>())).thenReturn(progress);
 
       when(() => context.repository).thenReturn(repository);
-      when(() => context.environment).thenReturn(FakeEnvironment());
-      when(() => context.environment).thenReturn(FakeEnvironment());
     });
 
     group('parseResults', () {

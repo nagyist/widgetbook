@@ -8,7 +8,9 @@ void main() {
     final report = UsageReport.from(
       version: '3.x.x',
       project: 'test',
+      projectId: 'yyyy',
       trackingId: 'xxxx',
+      ownerUrl: null,
       useCases: [
         MockUseCaseMetadata(
           componentName: 'ComponentA',
@@ -75,7 +77,7 @@ void main() {
     test('correct id', () {
       expect(
         report.id,
-        equals('test-C2-U5-P2-V3.x.x'),
+        equals('yyyy-C2-U5-P2-V3.x.x'),
       );
     });
 
@@ -94,10 +96,12 @@ void main() {
             '\$insert_id': report.id,
             'version': '3.x.x',
             'project': report.project,
+            'project_id': report.projectId,
             'packages': report.packages.toList(),
             'components': 2,
             'use_cases': 5,
             'heat_map': {'3': 1, '2': 1},
+            'owner_url': null,
           },
         }),
       );

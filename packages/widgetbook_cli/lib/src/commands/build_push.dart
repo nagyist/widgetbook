@@ -1,15 +1,17 @@
 import 'dart:async';
 
-import 'package:args/src/arg_results.dart';
+import 'package:args/args.dart';
 import 'package:file/file.dart';
 import 'package:file/local.dart';
 import 'package:path/path.dart' as p;
 import 'package:process/process.dart';
 
-import '../../widgetbook_cli.dart';
-import '../api/models/build_draft_request.dart';
-import '../api/models/build_ready_request.dart';
+import '../api/api.dart';
+import '../cache/cache.dart';
+import '../core/core.dart';
+import '../storage/storage.dart';
 import '../utils/executable_manager.dart';
+import '../utils/utils.dart';
 import 'build_push_args.dart';
 
 class BuildPushCommand extends CliCommand<BuildPushArgs> {
@@ -17,11 +19,11 @@ class BuildPushCommand extends CliCommand<BuildPushArgs> {
     required super.context,
     this.processManager = const LocalProcessManager(),
     this.fileSystem = const LocalFileSystem(),
-    this.zipEncoder = const ZipEncoder(),
-    this.useCaseReader = const UseCaseReader(),
-  })  : client = WidgetbookHttpClient(
-          environment: context.environment,
-        ),
+    this.cacheReader = const CacheReader(),
+    WidgetbookHttpClient? cloudClient,
+    StorageClient? storageClient,
+  })  : cloudClient = cloudClient ?? WidgetbookHttpClient(),
+        storageClient = storageClient ?? StorageClient(),
         super(
           name: 'push',
           description: 'Pushes a new build to Widgetbook Cloud',
@@ -50,16 +52,29 @@ class BuildPushCommand extends CliCommand<BuildPushArgs> {
         help: 'Full commit SHA',
       )
       ..addOption(
+        'merged-result-commit',
+        help: 'For GitLab Merged Results, '
+            'this commit will be used for commit status.',
+      )
+      ..addOption(
         'actor',
         help: 'Author of the commit',
+      )
+      ..addOption(
+        'api-url',
+        hide: true,
+        callback: (url) {
+          if (url == null) return;
+          this.cloudClient.client.options.baseUrl = url;
+        },
       );
   }
 
-  final WidgetbookHttpClient client;
+  final WidgetbookHttpClient cloudClient;
+  final StorageClient storageClient;
   final ProcessManager processManager;
   final FileSystem fileSystem;
-  final ZipEncoder zipEncoder;
-  final UseCaseReader useCaseReader;
+  final CacheReader cacheReader;
 
   @override
   FutureOr<BuildPushArgs> parseResults(
@@ -69,12 +84,29 @@ class BuildPushCommand extends CliCommand<BuildPushArgs> {
     final path = results['path'] as String;
     final apiKey = results['api-key'] as String;
 
-    final repository = context.repository!;
+    final repository = context.repository;
+
+    if (repository == null) {
+      logger.err(
+        'No repository found.\n'
+        'Make sure you are in a git repository '
+        'or run `git init` to initialize a new one.',
+      );
+
+      throw RepositoryNotFoundException();
+    }
+
     final currentBranch = await repository.currentBranch;
-    final branch = results['branch'] as String? ?? currentBranch.name;
+
+    final branch = results['branch'] as String? ??
+        context.providerBranch ??
+        currentBranch.name;
+
     final commit = results['commit'] as String? ??
         context.providerSha ??
         currentBranch.sha;
+
+    final mergedResultCommit = results['merged-result-commit'] as String?;
 
     final actor = results['actor'] as String? ?? context.user;
     if (actor == null) {
@@ -90,6 +122,7 @@ class BuildPushCommand extends CliCommand<BuildPushArgs> {
       apiKey: apiKey,
       branch: branch,
       commit: commit,
+      mergedResultCommit: mergedResultCommit,
       path: path,
       vendor: context.name,
       actor: actor,
@@ -105,34 +138,32 @@ class BuildPushCommand extends CliCommand<BuildPushArgs> {
       flutterVersionOutput: await processManager.runFlutter(['--version']),
     );
 
-    final useCasesProgress = logger.progress('Reading use-cases');
-    final useCases = await useCaseReader.read(args.path);
-    useCasesProgress.complete('${useCases.length} Use-case(s) read');
+    final cacheProgress = logger.progress('Reading cache');
+    final cache = await cacheReader.read(args.path);
 
-    final draftProgress = logger.progress('Creating build draft');
-    final buildDraft = await client.createBuildDraft(
-      versions,
-      BuildDraftRequest(
-        apiKey: args.apiKey,
-        versionControlProvider: args.vendor,
-        repository: args.repository,
-        actor: args.actor,
-        branch: args.branch,
-        sha: args.commit,
-        useCases: useCases,
-      ),
+    if (cache.isEmpty) {
+      cacheProgress.fail(
+        'No cache files were found\n\n'
+        'Make sure you have done the following:\n'
+        ' 1. Ran `dart run build_runner build -d` to generate cache files.\n'
+        ' 2. Included at least one use-case in your project.\n'
+        ' 3. Ran the CLI from the directory that contains your `.dart_tool`',
+      );
+
+      return 21;
+    }
+
+    cacheProgress.complete(
+      'Cache: ${cache.useCases.length} Use-case(s) '
+      '+ ${cache.addonsConfigs?.length ?? 0} AddonsConfig(s)',
     );
 
-    final buildId = buildDraft.buildId;
-    final signedUrl = buildDraft.storageUrl;
-    draftProgress.complete('Build draft [$buildId] created');
+    final filesProgress = logger.progress('Reading Files');
 
-    final archiveProgress = logger.progress('Creating build archive');
     final buildDirPath = p.join(args.path, 'build', 'web');
     final buildDir = fileSystem.directory(buildDirPath);
 
     if (!buildDir.existsSync()) {
-      archiveProgress.fail();
       logger.err(
         'build/web directory does not exist.\n'
         'Run the following command before publishing:\n\n\t'
@@ -141,23 +172,83 @@ class BuildPushCommand extends CliCommand<BuildPushArgs> {
       return 22;
     }
 
-    final zipFile = await zipEncoder.zip(buildDir, '$buildId.zip');
-    if (zipFile == null) {
-      archiveProgress.fail('Failed to create build archive');
-      return 23;
-    }
+    final files = buildDir //
+        .listSync(recursive: true)
+        .whereType<File>();
 
-    archiveProgress.complete('Build archive created at ${zipFile.path}');
+    final dirSize = files.fold<int>(
+      0,
+      (previousValue, file) => previousValue + file.statSync().size,
+    );
 
-    final uploadProgress = logger.progress('Uploading build archive');
-    await client.uploadBuildFile(signedUrl, zipFile);
-    uploadProgress.complete('Build archive uploaded');
+    filesProgress.complete('${files.length} File(s) read');
+
+    final draftProgress = logger.progress('Creating build draft');
+    final buildDraft = await cloudClient.createBuildDraft(
+      versions,
+      BuildDraftRequest(
+        apiKey: args.apiKey,
+        versionControlProvider: args.vendor,
+        repository: args.repository,
+        actor: args.actor,
+        branch: args.branch,
+        sha: args.commit,
+        mergedResultSha: args.mergedResultCommit,
+        useCases: cache.useCases,
+        addonsConfigs: cache.addonsConfigs,
+        size: dirSize,
+      ),
+    );
+
+    draftProgress.complete('Build draft [${buildDraft.buildId}] created');
+
+    final uploadProgress = logger.progress('Uploading build files');
+
+    final objects = files.map(
+      (file) {
+        final key = p.relative(
+          file.path,
+          from: buildDirPath,
+        );
+
+        if (key != 'index.html') {
+          return StorageObject(
+            key: key,
+            size: file.statSync().size,
+            reader: file.openRead,
+          );
+        }
+
+        // Modify index.html to include the correct base href
+        final content = file.readAsStringSync();
+        final modifiedContent = content.replaceFirst(
+          RegExp('<base href=".*" ?\/?>'),
+          '<base href="${buildDraft.baseHref}">',
+        );
+
+        return StorageObject(
+          key: key,
+          size: modifiedContent.length,
+          reader: () => Stream.value(
+            modifiedContent.codeUnits,
+          ),
+        );
+      },
+    );
+
+    await storageClient.uploadObjects(
+      buildDraft.storage.url,
+      buildDraft.storage.fields,
+      objects,
+    );
+
+    uploadProgress.complete('Build files uploaded');
 
     final submitProgress = logger.progress('Submitting build');
-    final response = await client.submitBuildDraft(
+    final response = await cloudClient.submitBuildDraft(
       BuildReadyRequest(
         apiKey: args.apiKey,
-        buildId: buildId,
+        buildId: buildDraft.buildId,
       ),
     );
 

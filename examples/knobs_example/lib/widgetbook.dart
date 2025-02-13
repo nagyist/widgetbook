@@ -89,7 +89,7 @@ class WidgetbookApp extends StatelessWidget {
                   KnobEntry<Color>(
                     name: 'Color',
                     builder: (color) => Text(
-                      color.value.toRadixString(16),
+                      '${color}',
                       style: TextStyle(
                         color: color,
                       ),
@@ -125,6 +125,17 @@ class WidgetbookApp extends StatelessWidget {
                       label: 'dateTimeOrNull',
                       start: DateTime(initialDate.year - 1),
                       end: DateTime(initialDate.year + 1),
+                    ),
+                  ),
+                  KnobEntry<int>(
+                    name: 'List<int>',
+                    regular: context.knobs.list(
+                      label: 'list',
+                      options: List.generate(10, (index) => index),
+                    ),
+                    nullable: context.knobs.listOrNull(
+                      label: 'listOrNull',
+                      options: List.generate(10, (index) => index),
                     ),
                   ),
                 ],

@@ -19,7 +19,6 @@ const expectedUsage = [
       '\n'
       'Available commands:\n'
       '  cloud     Manage your Widgetbook Cloud projects.\n'
-      '  publish   Publish a new build\n'
       '  upgrade   Upgrade Widgetbook CLI\n'
       '\n'
       'Run "widgetbook help <command>" for more information about a command.'
@@ -61,8 +60,6 @@ void main() {
       when(
         () => pubUpdater.getLatestVersion(any()),
       ).thenAnswer((_) async => packageVersion);
-
-      when(() => globalContext.environment).thenReturn(FakeEnvironment());
 
       cliRunner = CliRunner(
         context: globalContext,

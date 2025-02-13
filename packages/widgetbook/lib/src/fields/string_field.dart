@@ -10,14 +10,12 @@ class StringField extends Field<String> {
     required super.name,
     super.initialValue = '',
     this.maxLines,
-    @deprecated super.onChanged,
+    @Deprecated('Fields should not be aware of their context') super.onChanged,
   }) : super(
           type: FieldType.string,
           codec: FieldCodec(
-            toParam: (value) => Uri.encodeComponent(value),
-            toValue: (param) => param != null
-                ? Uri.decodeComponent(param) //
-                : null,
+            toParam: (value) => value,
+            toValue: (param) => param,
           ),
         );
 
